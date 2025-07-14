@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>BMW病毒</title>
+<Link Rel="SHORTCUT ICON" href="./44161.ico">
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+  }
+  #container {
+    width: 80%;
+    margin: 0 auto;
+    padding-top: 25px;
+  }
+  h1 {
+    padding-left: 20px;
+  }
+  #top-right-text {
+    position: absolute;
+    top: 86px;
+    right: -30px;
+    padding: 10px;
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+  }
+  #top-right-text h4 {
+    margin: 0;
+    padding: 0;
+  }
+  img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+    padding: 10px 0;
+  }
+  #footer {
+    background-color: #FFFFFF;
+    text-align: center;
+    padding: 10px;
+    margin-top: 20px;
+  }
+  span {
+    display: flex;
+    justify-content: center;
+  }
+</style>
+</head>
+<body>
+<h1>2011年电脑病毒之王 BMW病毒</h1>
+  <h1><font color="red">前言</font></h1>
+  <h2>自1998年CIH病毒之后，国内又诞生一款可以感染主板BIOS芯片的电脑病毒。2011年，BMW病毒现身，其破坏力远超13年前的CIH病毒。BMW病毒能感染主板BIOS程序和硬盘MBR主引导记录，它采用连环感染招术，在用户每次开机的时候，它会通过添加在BIOS程序里的模块代码检测硬盘MBR是否被感染过，如果没有则重新感染，之后才会加载硬盘进入系统。使得受害者无论是重装系统、全盘低级格式化、更换硬盘都无法彻底清除病毒。</h2>
+  <center><h2><font color="blue">连环感染简图：</font></h2></center>
+  <img src="0e655ca702f231f9d043580b.webp" width="619" height="370">
+  <h1><font color="red">中招症状是什么？</font></h1>
+  <h2>杀毒软件无法正常运行，提示无法定位输入点到KERNEL32.DLL，或者直接无法打开，系统启动项和进程看不到任何异常，C盘根目录和C:\WINDOWS\system32\drivers目录下出现奇怪的sys文件，且无法删除，杀毒软件反复提示引导扇区病毒但无法清除干净，进入系统前会先显示文字Find it OK!</h2>
+
+
+
+  <h1><font color="red">运行BMW病毒时，它对电脑做了什么？</font></h1>
+  <h2>病毒本体很小，只有87.6KB，用了UPX压缩，病毒本体包括了以下几个文件，这里粗略列出来几个</h2>
+  <h3>bios.sys（往BIOS安装病毒设备）</h3>
+  <h3>bios.exe（CBROM工具，挂载、修改BIOS源文件）</h3>
+  <h3>b.exe（修改BIOS、MBR主程序）</h3>
+  <h3>beep.sys（鬼影时代的产物，在MBR模块中）</h3>
+  <h3>xxxxxxxx.sys（随机4位十六进制名称，在MBR模块中）</h3>
+  <h2>还有一些DLL之类的文件，都是MBR模块用于注入等操作的文件，这边不列举了。</h2>
+  <h2>病毒开始运行，将自己释放到内存当中，对于Award Bios的电脑，病毒会备份BIOS程序，利用CBROM工具添加<font color="red">hook.rom</font>到BIOS的ISA模块中，随后就是修正BIOS代码，安装设备驱动等操作，完成对BIOS的感染。对于不是Award Bios的电脑，则检测是否存在特定杀毒软件（360、瑞星、江民、微点、金山、卡巴斯基，如果有就尝试终结掉），然后感染输入法程序。</h2>
+  <h3>C:\WINDOWS\ime</h3>
+  <h3>C:\WINDOWS\system32\conime.exe</h3>
+  <h2>最后直接感染MBR（硬盘主引导记录），内容和鬼影差不多。</h2>
+  <h1><font color="red">BMW病毒 BIOS模块</font></h1>
+  <h2>利用WinExec调用命令行cbrom original.bin /isa hook.rom，往BIOS中添加ISA设备hook.rom，作用是检测硬盘MBR是否被修复。开机时病毒设备将MBR保存到内存当中，通过校验哈希值对比硬盘MBR，如果被修复了，则重新将约14个扇区的病毒内容写入MBR，使得用户就算是更换硬盘都无法清除病毒。</h2>
+  <center><h2><font color="blue">BIOS里的检测代码（不包含MBR内容）：</font></h2></center>
+  <img src="1626332.gif" width="619" height="370">
+  <center><h2><font color="blue">病毒设备hook.rom：</font></h2></center>
+  <img src="1626331.gif" width="619" height="370">
+  <h1><font color="red">BMW病毒 MBR模块</font></h1>
+  <h2>0扇区--------------------->病毒钩子，监控NTLDR被加载或是winload.exe读取BCD文件，用BOOTMGR加载系统</h2>
+  <h2>1扇区--------------------->备份包括55AA标识的原MBR到内存当中</h2>
+  <h2>2-14扇区--------------------->病毒驱动xxxxxxxx.sys，生成到C:\WINDOWS\system32\drivers中并以服务形式加载，随后根据不同文件系统（病毒支持NTFS和FAT32）查找硬盘中winlogon.exe的地址（XP感染winlogon，win7及以上感染wininit），随后感染包括kernel32.dll等系统文件，内核级别阻止杀软启动，最后验证病毒感染winlogon是否成功，成功了就显示文字Find it OK!，然后跳转到原MBR。至此，MBR模块结束。</h2>
+  <center><h2><font color="blue">病毒的MBR信息：</font></h2></center>
+  <img src="1626333.gif" width="619" height="370">
+  <center><h2><font color="blue">感染病毒后的开机标识：</font></h2></center>
+  <img src="18CF42AA3F959C8CD10F079A3C79E7E3.gif" width="619" height="370">
+  <h1><font color="red">BMW病毒 Windows系统模块</font></h1>
+  <h2>对于Award Bios的电脑用户来说，此时BMW病毒已经有了整台电脑的最高权限，病毒在联网情况下可以做出任意黑客指令，实行盗号、远控等操作</h2>
+  <h2>Win系统加载，病毒钩子启动。当winlogon加载，病毒已经事先修改了文件入口，系统会先加载加密过的病毒代码，执行时动态解码，主要内容是下载my.sys并加载，添加映像劫持，作用是保护自己和反杀毒软件，然后才会CreateThread原来的winlogon进程，病毒Sleep(6000);，然后挂钩监控系统登陆。</h2>
+  <h2>系统登陆，其他被感染的系统程序开始执行（被感染的方式和winlogon差不多，会先经过百度代码，检测病毒有无被清除），病毒驱动调用URLDownloadToFileA下载黑客服务器上的第三方木马程序。下载完成后验证文件完整性，然后调用WinExec("xxxxxxxx",SW_HIDE);执行，执行完后，病毒进入无线Sleep，永远潜伏在系统后台，杀毒软件也奈何不了它怎么样，用户电脑面临账号被盗，当作肉鸡一样随意拿捏的风险。</h2>
+  <h1><font color="red">相关图片和信息：</font></h1>
+  <center><h2><font color="blue">MBR专杀无法清除：</font></h2></center>
+  <img src="30a31eb43a627ea0aa0c8aad895cf6a5.png" width="619" height="370">
+  <center><h2><font color="blue">病毒驱动：</font></h2></center>
+  <img src="屏幕截图 2025-07-14 134701.png" width="619" height="370">
+  <center><h2><font color="blue">病毒驱动my.sys：</font></h2></center>
+  <img src="屏幕截图 2025-07-14 134855.png" width="619" height="370">
+  <center><h2><font color="blue">数据：</font></h2></center>
+  <img src="screenshot-1752472265668.png" width="619" height="370">
+  <img src="fe0a26360399baa49e9e52ecc588608f.png" width="619" height="370">
+  <h2>值得一提的是，病毒内容里有大量ping www.baidu.com的内容。</h2>
+  <h2>病毒使用的鬼影服务器已经在2020年关闭了，因此病毒需要的文件都无法执行了，大家不必担心。而且现在使用的都是UEFI+GPT配置，因此不牵扯这种Rootkit病毒，平时做好防护，不轻易关闭杀毒软件即可！</h2>
+  <h2>病毒下载链接（谨慎食用）</h2>
+  <button onclick="window.open('BMW.zip', '_blank')">下载文件 BMW.zip</button>
+  <span>
+    <a href="https://wx.mail.qq.com/" target="_blank" rel="nofollow">
+      <img src="qqemail.jpeg" width="30" height="30">
+    </a>
+    <a href="https://message.bilibili.com/" target="_blank" rel="nofollow">
+      <img src="bilibili.jpeg" width="30" height="30">
+    </a>
+    <a href="https://wx.qq.com/" target="_blank" rel="nofollow">
+      <img src="wechat.jpeg" width="30" height="30">
+    </a>
+  </span>
+</div>
+
+<div id="footer">
+  免责声明：本网站内容仅供学习与交流，请勿用于非法和商业用途。<br>
+  ©Bro_T23 2025
+</div>
+
+</body>
+</html>
